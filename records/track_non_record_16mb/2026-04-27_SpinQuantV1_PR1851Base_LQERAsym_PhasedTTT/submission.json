@@ -1,25 +1,49 @@
 {
   "author": "Abhishek Leji",
   "github_id": "X-Abhishek-X",
-  "name": "SpinQuant V1 + PR #1851 Base + LQER Asym + Phased TTT",
+  "name": "SpinQuant V1 + PR #1851 Base + LQER Asym + Phased TTT (EMBED_BITS ablation)",
   "date": "2026-04-27",
   "track": "track_non_record_16mb",
-  "val_bpb": 1.06182,
-  "seeds": [42],
-  "seed_results": {
-    "42": {"val_bpb": 1.06182, "artifact_bytes": 16956923}
+  "notes_on_track": "Non-record ablation. Two sub-runs: (A) EMBED_BITS=8 — best quality but 16,956,923 bytes oversize; (B) EMBED_BITS=6 — legal size 15,921,823 bytes but embedding quantization degrades final BPB. Full 3-seed record submission in track_10min_16mb.",
+  "runs": {
+    "embed8_oversize_seed42": {
+      "seed": 42,
+      "embed_bits": 8,
+      "val_bpb": 1.06182,
+      "artifact_bytes": 16956923,
+      "artifact_over_16mb": true,
+      "pre_quant_bpb": 1.06822,
+      "post_gptq_bpb": 1.07463,
+      "gptq_damage": 0.00640,
+      "eval_time_s": 519.5
+    },
+    "embed6_legal_seed1337": {
+      "seed": 1337,
+      "embed_bits": 6,
+      "val_bpb": 1.07127,
+      "artifact_bytes": 15921823,
+      "artifact_over_16mb": false,
+      "pre_quant_bpb": 1.06761,
+      "post_gptq_bpb": 1.08494,
+      "gptq_damage": 0.01733,
+      "eval_time_s": 592.4,
+      "train_steps": 4860,
+      "hardware": "8xH100 80GB SXM",
+      "pytorch_version": "2.9.1+cu128"
+    }
   },
+  "seeds": [42, 1337],
   "hardware": "8xH100 80GB SXM",
   "pytorch_version": "2.9.1+cu128",
-  "technique_summary": "PR #1851 base (CaseOps + SparseAttnGate + SmearGate-BOS-fix + LQER-Asym + 3-phase Phased TTT) + SpinQuant V1 (per-layer Hadamard pre-rotation of all Q/K/V/Out/Up/Down weight matrices before GPTQ, zero serialized bytes, seed-regenerated at eval). SpinQuant reduces GPTQ damage from +0.00916 (PR #1851) to +0.00640 (this PR), a 30% improvement in quantization resistance.",
+  "technique_summary": "SpinQuant V1 (per-layer Hadamard pre-rotation of all Q/K/V/Out/Up/Down before GPTQ, zero serialized bytes) grafted onto PR #1851 base (CaseOps + SparseAttnGate + SmearGate-BOS-fix + LQER-Asym rank-4 + 3-phase Phased TTT). EMBED_BITS=8 demonstrates SpinQuant reduces GPTQ damage from +0.00916 (PR #1851 base) to +0.00640 (-30%). EMBED_BITS=6 demonstrates the legal-size tradeoff: SpinQuant's ~1MB brotli entropy penalty forces EMBED_BITS=6, which adds +0.01093 embedding quantization damage, making the net worse than baseline. Full record submission uses EMBED_BITS=6 and targets 3-seed mean.",
   "compliance": {
     "train_under_600s": true,
-    "artifact_under_16mb": false,
+    "artifact_under_16mb_embed8": false,
+    "artifact_under_16mb_embed6": true,
     "eval_under_600s": true,
     "smeargate_bos_fix": true,
     "score_first_ttt": true
   },
-  "notes": "Artifact is 16,956,923 bytes (956,923 bytes over the 16MB cap) due to Brotli compression being less efficient on Hadamard-rotated weight tensors. Submitted as non-record ablation study demonstrating SpinQuant V1 + LQER composition.",
   "attribution": {
     "pr1851_base": "@aquariouseworkman (PR #1851)",
     "pr1787_base": "@nprime06 (PR #1787)",
